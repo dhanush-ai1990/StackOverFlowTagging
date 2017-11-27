@@ -49,15 +49,16 @@ def MyExtraTreeClassifier(X_train, y_train):
 	clf = ExtraTreesClassifier(min_samples_split=2, random_state=0,max_depth = 10)
 	param_grid = {'n_estimators': [10,20,30,50]}
 	#param_grid = {'max_depth': [1,5,10,25,50,75,100,500,1000,2000]}
-	classifier= GridSearchCV(estimator=clf, cv=3 ,param_grid=param_grid)
+	classifier= GridSearchCV(estimator=clf, cv=3 ,param_grid=param_grid,n_jobs=3)
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
 
 
 def MyRandomForest(X_train, y_train):
 	clf = RandomForestClassifier()
-	param_grid = {'n_estimators': [10,20,30,50,70,100,200,500]}
-	classifier= GridSearchCV(estimator=clf, cv=2 ,param_grid=param_grid)
+	#param_grid = {'n_estimators': [10,20,30,50,70,100]}
+	param_grid = {'n_estimators': [50]}
+	classifier= GridSearchCV(estimator=clf, cv=2 ,param_grid=param_grid,verbose=10)
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
 
@@ -69,13 +70,13 @@ def rbf_svm(X_train, y_train):
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
 
-print ("Running the code for Random Forest full features")
+#print ("Running the code for Random Forest full features")
 print ("Running the code for Random Forest min_df=10")
-print ("Running the code for Random Forest min_df=20")
-db_file='/Users/Dhanush/Desktop/Projects/StackOverFlowTagging/Database/SODATA.db'
+#print ("Running the code for Random Forest min_df=20")
+db_file='SODATA.db'
 conn = sqlite3.connect(db_file)
 cursor = conn.cursor()
-#SQL = "Select  dp,tag from nouns;"
+SQL = "Select  dp,tag from nouns;"
 cursor.execute(SQL)
 
 X=[]
@@ -84,7 +85,6 @@ y=[]
 for row in cursor:
 	X.append(row[0])
 	y.append(row[1])
-
 #Complete dataset loaded
 
 #Change Y to categorical labels.
@@ -103,20 +103,29 @@ for i in range(len(y)):
 
 a=time.time()
 print ("Vectorization started")
-cv = TfidfVectorizer(input ='X',stop_words = {'english'},lowercase=True,analyzer ='word',min_df=20)#,non_negative=True)#,max_features =75000)
+cv = TfidfVectorizer(input ='X',stop_words = {'english'},lowercase=True,analyzer ='word',min_df=10,max_features =5000)#,non_negative=True)#,)
 X = cv.fit_transform(X)
 vocab = np.array(cv.get_feature_names())
-print len(vocab)
+print (len(vocab))
 print ("Time taken to vectorize is %s seconds" %(time.time()-a))#print vocab
 
 
 #Lets split the data into train-test
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=453456)
-print X_train.shape
+
+from collections import Counter
+kk=list(set(y_train))
+kk.sort()
+print (kk)
+
+raise Exception("stop")
+print (X_train.shape)
+X_train = X_train[0:100000]
+y_train  =y_train[0:100000]
 results_ = MyRandomForest(X_train,y_train)
-print results_['mean_train_score']
-print results_['mean_test_score']
+print (results_['mean_train_score'])
+print (results_['mean_test_score'])
 """
 clf = MultinomialNB(alpha=1)
 

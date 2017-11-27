@@ -1,3 +1,4 @@
+import pandas as pd
 import sqlite3
 import re
 from spacy.en.language_data import STOP_WORDS
@@ -10,25 +11,16 @@ import csv
 from bs4 import BeautifulSoup
 from spacy.pipeline import DependencyParser
 import nltk
-def create_connection(db_file):
-    # create a database connection to the SQLite database
-    try:
-        conn = sqlite3.connect(db_file)
-        return conn
-    except Error as e:
-        print(e)
- 
-    return None
+tag_file=['bash','c++','php','javascript','sql','c#','html','c','r','python','css','perl','objective-c','java','vb.net','ruby','swift','haskell','lua','scala']
+print (len(tag_file))
 
-def load_data(conn):
-	cursor = conn.cursor()
-	SQL = "Select * from posts;"
-	# SQL = "Select * from sm_post where serial='4';"
-	cursor.execute(SQL)
-	title = list()
+tag_dict ={}
+for tag in tag_file:
+    #tag=tag.split('\n')[0]
+    tag_dict[tag] = 0
 
-	return cursor
-	
+
+
 def clean_data(text, stop_words, nlp):
 	clean_text = re.sub(r'[^a-zA-Z ]', ' ', text).lower()
 	# print("***************")
@@ -80,56 +72,59 @@ def dependencyparser(parser,combined):
 	return " ".join(temp)
 
 
-def main():
-	en_stopwords = stopwords.words('english')
-	stop_words = list(STOP_WORDS) + list(ENGLISH_STOP_WORDS) + list(en_stopwords)
-	
-	nlp = spacy.load('en')
-	parser = English()
-	conn   = create_connection("Sotags.db")
-	cursor = load_data(conn)
-
-	title_csv = open_csv('title.csv')
-	title_csv.writerow(['serial','title','tag'])
-
-	body_csv = open_csv('body.csv')
-	body_csv.writerow(['serial','body','tag'])
-
-	code_csv = open_csv('code.csv')
-	code_csv.writerow(['serial','code','tag'])
-
-	dep_csv = open_csv('dependency.csv')
-	dep_csv.writerow(['serial','dp','tag'])
 
 
-	start_time = time.time()
-	
-	for i,data in enumerate(cursor):
-		title = clean_data(data[2], stop_words, nlp)
-		body_text, body_code = body_split(data[3])
+en_stopwords = stopwords.words('english')
+stop_words = list(STOP_WORDS) + list(ENGLISH_STOP_WORDS) + list(en_stopwords)
+nlp = spacy.load('en')
+parser = English()	
+
+
+
+
+title_csv = open_csv('title.csv')
+title_csv.writerow(['postid','title','tag','date','score'])
+
+body_csv = open_csv('body.csv')
+body_csv.writerow(['postid','body','tag','date','score'])
+
+code_csv = open_csv('code.csv')
+code_csv.writerow(['postid','code','tag','date','score'])
+
+dep_csv = open_csv('dependency.csv')
+dep_csv.writerow(['postid','dp','tag','date','score'])
+
+filename='/Users/Dhanush/Desktop/Projects/StackOverFlowTagging/Database/posts.csv'
+chunksize = 10 ** 6
+
+print ("Here")
+start_time = time.time()
+for chunk in pd.read_csv(filename, chunksize=chunksize):
+	rows = chunk.values.tolist()
+	for row in rows:
+		score=row[5]
+		date=str(row[6])
+		tag=row[4]
+		if tag_dict[tag] >10000:
+			continue
+		if int(date[0:4]) < 2012:
+			continue
+		if int(date[0:4]) > 2016:
+			continue
+		if int(score) <1:
+			continue
+
+		title = clean_data(row[2], stop_words, nlp)
+		body_text, body_code = body_split(row[3])
 		body  = clean_data(body_text, stop_words, nlp)
-		
-		title_csv.writerow([data[0],title,data[4]])
-		body_csv.writerow([data[0],body,data[4]])
-		code_csv.writerow([data[0],body_code,data[4]])
-
-
-		#Lets do named entity recognition.
-		combined = data[2] + " " +data[3]
+		title_csv.writerow([row[0],title,row[4]])
+		body_csv.writerow([row[0],body,row[4]])
+		code_csv.writerow([row[0],body_code,row[4]])
+		combined = row[2] + " " +row[3]
 		combined, combined_code = body_split(combined)
 		dp =dependencyparser(parser,combined)
 		dep=clean_data(dp, stop_words, nlp)
-		"""
-		print ("-------------------")
-		print (combined)
-		print ("******************")
-		print (dep)
-		"""
-		dep_csv.writerow([data[0],dep,data[4]])
-		if (i%10000==0):
-			print (str(i)+'/750000')
-			print("--- %s seconds ---" % (time.time() - start_time))
-			start_time = time.time()
-
-
-main()
+		tag_dict[tag] +=1
+	print("--- %s seconds ---" % (time.time() - start_time))
+	print (tag_dict)
+	start_time = time.time()
