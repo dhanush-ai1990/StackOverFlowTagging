@@ -57,7 +57,7 @@ def MyExtraTreeClassifier(X_train, y_train):
 def MyRandomForest(X_train, y_train):
 	clf = RandomForestClassifier()
 	#param_grid = {'n_estimators': [10,20,30,50,70,100]}
-	param_grid = {'n_estimators': [50]}
+	param_grid = {'n_estimators': [100]}
 	classifier= GridSearchCV(estimator=clf, cv=2 ,param_grid=param_grid,verbose=10)
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
@@ -69,7 +69,7 @@ def rbf_svm(X_train, y_train):
 	y_train= np.array(y_train)
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
-
+"""
 #print ("Running the code for Random Forest full features")
 print ("Running the code for Random Forest min_df=10")
 #print ("Running the code for Random Forest min_df=20")
@@ -109,18 +109,11 @@ vocab = np.array(cv.get_feature_names())
 print (len(vocab))
 print ("Time taken to vectorize is %s seconds" %(time.time()-a))#print vocab
 
-
+"""
 #Lets split the data into train-test
+[X,y]=joblib.load('/Users/Dhanush/Desktop/Projects/StackOverFlowTagging/Database/DocVectors/Text25VectorP2.pkl')
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=453456)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=453456)
-
-from collections import Counter
-kk=list(set(y_train))
-kk.sort()
-print (kk)
-
-raise Exception("stop")
-print (X_train.shape)
 X_train = X_train[0:100000]
 y_train  =y_train[0:100000]
 results_ = MyRandomForest(X_train,y_train)
