@@ -57,7 +57,7 @@ def MyExtraTreeClassifier(X_train, y_train):
 def MyRandomForest(X_train, y_train):
 	clf = RandomForestClassifier()
 	#param_grid = {'n_estimators': [10,20,30,50,70,100]}
-	param_grid = {'n_estimators': [100]}
+	param_grid = {'n_estimators': [50]}
 	classifier= GridSearchCV(estimator=clf, cv=2 ,param_grid=param_grid,verbose=10)
 	classifier.fit(X_train, y_train)
 	return classifier.cv_results_
@@ -111,11 +111,14 @@ print ("Time taken to vectorize is %s seconds" %(time.time()-a))#print vocab
 
 """
 #Lets split the data into train-test
-[X,y]=joblib.load('/Users/Dhanush/Desktop/Projects/StackOverFlowTagging/Database/DocVectors/Text25VectorP2.pkl')
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=453456)
+[X,y]=joblib.load('/Users/Dhanush/Desktop/Projects/StackOverFlowTagging/Database/DocVectors/Text25Vectors300.pkl')
+#[X,y]=joblib.load('Text25Vectors.pkl')
 
-X_train = X_train[0:100000]
-y_train  =y_train[0:100000]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=453456)
+
+print (len(X_train),len(X_train[0]))
+#X_train = X_train[0:100000]
+#y_train  =y_train[0:100000]
 results_ = MyRandomForest(X_train,y_train)
 print (results_['mean_train_score'])
 print (results_['mean_test_score'])
